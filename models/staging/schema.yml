@@ -1,0 +1,28 @@
+version: 2
+
+sources:
+  - name: retail_raw
+    schema: raw
+    tables:
+      - name: retail
+        description: "Original Excel records with source-row identifiers."
+
+models:
+  - name: stg_retail
+    description: >
+      All original records with standardized fields and quality flags.
+      No rows are removed or deduplicated.
+    columns:
+      - name: source_row_number
+        description: "Original Excel row number."
+        tests:
+          - unique
+          - not_null
+
+      - name: invoice_no
+        tests:
+          - not_null
+
+      - name: invoice_at
+        tests:
+          - not_null

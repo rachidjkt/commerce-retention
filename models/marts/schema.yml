@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: fct_orders
+    description: >
+      Positive recorded invoice activity for identified customers.
+      Amounts are gross recorded sales, not cancellation-adjusted revenue.
+      Potential duplicate source lines remain included.
+
+    columns:
+      - name: order_id
+        tests:
+          - unique
+          - not_null
+
+      - name: customer_id
+        tests:
+          - not_null
+
+      - name: order_at
+        tests:
+          - not_null

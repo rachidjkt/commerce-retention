@@ -1,0 +1,12 @@
+name: commerce_retention
+version: "1.0.0"
+config-version: 2
+
+profile: commerce_retention
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+models:
+  commerce_retention:
+    +materialized: view

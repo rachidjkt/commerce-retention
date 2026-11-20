@@ -1,0 +1,8 @@
+commerce_retention:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: data/commerce.duckdb
+      schema: analytics
+      threads: 1
