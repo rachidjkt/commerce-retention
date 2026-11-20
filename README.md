@@ -2,6 +2,8 @@
 
 Predict whether an identified existing customer places another recorded positive order within 30 days. This project turns transaction records into auditable customer snapshots and compares a constant baseline, recency-only logistic regression, and full logistic regression using chronological validation.
 
+The implementation covers source-row traceability, SQL quality flags, positive-order aggregation, customer snapshots with historical cutoffs, and scikit-learn model comparison. It provides an auditable ranking of repeat-purchase propensity for customer prioritization.
+
 **Stack:** Python, SQL, DuckDB, dbt, pandas, scikit-learn.
 
 ```text
@@ -37,7 +39,7 @@ For a deliberate reproduction of the completed modeling experiment, after buildi
 .\.venv\Scripts\python.exe evaluate_test.py
 ```
 
-These two commands overwrite model/evaluation artifacts. Training fits only the training snapshots and scores validation; final evaluation loads the saved constant and full logistic models without refitting. They were **not run during packaging**. The final holdout was not reevaluated. Saved model binaries and customer-level predictions are excluded from Git, so evaluation in a new checkout requires training first. Aggregate results are already available in `artifacts/validation_metrics.csv` and `artifacts/test_metrics.csv`.
+These commands deliberately reproduce the experiment and overwrite model/evaluation artifacts. Training fits only training snapshots and scores validation; final evaluation loads the selected full logistic model and constant baseline without refitting. Saved models and customer-level predictions are excluded from Git, so a new checkout requires training before evaluation. To review existing results, use the committed aggregate CSVs without rerunning the holdout.
 
 `requirements.txt` is the complete UTF-8 `pip freeze` from this project's existing `.venv`, including transitive and unused installed packages. It contains no local dependency paths. A fresh installation was not tested.
 
@@ -86,22 +88,28 @@ The constant baseline predicts the training return prevalence. Both logistic mod
 
 ## Results
 
-Values below match the saved aggregate CSVs. Higher ROC-AUC and average precision (AP) are better; lower Brier score is better.
+Values below are rounded to four decimals from the saved aggregate CSVs; those files retain full precision. Higher ROC-AUC and average precision (AP) are better; lower Brier score is better.
 
 | Split | Model | ROC-AUC | AP | Brier |
 | --- | --- | ---: | ---: | ---: |
-| Validation | Constant baseline | 0.5 | 0.23792884371029224 | 0.18328948461706326 |
-| Validation | Recency only | 0.7035149269471982 | 0.3879307950063505 | 0.168022599731042 |
-| Validation | Full logistic | 0.7672789786131405 | 0.574311935406067 | 0.15163135717761853 |
-| Final test | Constant baseline | 0.5 | 0.2701880530973451 | 0.19733370808340028 |
-| Final test | Full logistic | 0.7180121963942949 | 0.5477147307888146 | 0.17396076280165507 |
+| Validation | Constant baseline | 0.5000 | 0.2379 | 0.1833 |
+| Validation | Recency only | 0.7035 | 0.3879 | 0.1680 |
+| Validation | Full logistic | 0.7673 | 0.5743 | 0.1516 |
+| Final test | Constant baseline | 0.5000 | 0.2702 | 0.1973 |
+| Final test | Full logistic | 0.7180 | 0.5477 | 0.1740 |
 
 The completed run reported 724 customers in the highest-scored 20% (`ceil(0.20 * 3616)`), with a 56.08% observed return rate versus 27.02% overall: **2.08x ranking lift**. These rounded prioritization figures come from the completed-run notes; they are not stored in the aggregate metric CSVs and were not recalculated during packaging. No conflict was found between those notes, the saved aggregate metrics, and the checked data counts.
 
 This predicts **purchasing propensity**, not the incremental effect of marketing. Labels describe observed purchases without treatment assignment or a control group. A high-scoring customer may return without contact; ranking lift does not establish marketing uplift, campaign ROI, or business savings.
 
-## Verification and limitations
+## Verification
 
-Packaging verification used the existing environment and database: all six project Python files passed syntax parsing, and `dbt build --profiles-dir .` built 3 models and passed 11 data tests. The previously empty `orders_have_positive_values.sql` was completed to check positive order values; modeling behavior, SQL feature logic, and temporal splits were unchanged. No retraining, final holdout evaluation, or fresh installation was performed.
+Initial publication checks on November 20 used the existing environment and database: six Python files passed syntax parsing, and `dbt build --profiles-dir .` built 3 models and passed 11 data tests. This documentation polish checked relative links and consistency with code and saved evidence; it did not rerun training, dbt, or final holdout evaluation. A fresh installation was not tested.
 
-Limitations: historical data from one retailer; customers without IDs are excluded from retention modeling; possible duplicate source lines are preserved; cancellations are not reconciled against purchases; gross recorded sales are not net revenue; repeat-purchase labels do not establish marketing uplift; customers recur across historical snapshots; there is no production deployment or measured business savings. Validation and test performance differ, so these results do not establish future performance.
+## Limitations
+
+The data comes from one historical retailer and excludes customers without IDs from retention modeling. Possible duplicate source lines remain, and cancellations are not reconciled against purchases, so gross recorded sales are not net revenue. Customers recur across historical snapshots. Repeat-purchase labels do not establish marketing uplift, and there is no production deployment or measured business savings. Validation and test performance differ, so these results do not establish future performance.
+
+## Attribution and licensing
+
+The UCI dataset is attributed above and downloaded separately under CC BY 4.0. Python dependencies, DuckDB, dbt, pandas, and scikit-learn retain their own licenses. See [ATTRIBUTION.md](ATTRIBUTION.md) for source and dependency scope. No project-wide code license has been selected.
